@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-# from rest_framework.relations import SlugRelatedField  # зачем такой импорт???????????????
 
 from posts.models import Comment, Follow, Group, Post
 
@@ -8,7 +7,6 @@ User = get_user_model()
 
 
 class PostSerializer(serializers.ModelSerializer):
-    # author = SlugRelatedField(slug_field='username', read_only=True)
     author = serializers.SlugRelatedField(
         slug_field='username', read_only=True
     )
@@ -43,12 +41,6 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('user', 'following')
         model = Follow
-        # validators = [
-        #     UniqueTogetherValidator(
-        #         queryset=Follow.objects.all(),
-        #         fields=('user', 'following')
-        #     )
-        # ]
 
     def validate(self, data):
         print(data.keys())
