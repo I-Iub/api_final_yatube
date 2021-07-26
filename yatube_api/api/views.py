@@ -5,6 +5,7 @@ from rest_framework import filters, mixins, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
 from posts.models import Follow, Group, Post
+from .permissions import AuthorOrReadOnly
 from .serializers import (CommentSerializer, FollowSerializer, GroupSerializer,
                           PostSerializer)
 
@@ -15,23 +16,15 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     pagination_class = LimitOffsetPagination
+    permission_classes = (AuthorOrReadOnly,)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def perform_update(self, serializer):
-        if self.request.user != serializer.instance.author:
-            raise PermissionDenied('Нельзя изменить чужой пост!')
-        super(PostViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, serializer):
-        if self.request.user != serializer.author:
-            raise PermissionDenied('Нельзя удалить чужой пост!')
-        super(PostViewSet, self).perform_destroy(serializer)
-
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    permission_classes = (AuthorOrReadOnly,)
 
     def get_queryset(self):
         post_id = self.kwargs.get('post_id')
@@ -43,16 +36,6 @@ class CommentViewSet(viewsets.ModelViewSet):
         post_id = self.kwargs.get('post_id')
         post = get_object_or_404(Post, id=post_id)
         serializer.save(author=self.request.user, post=post)
-
-    def perform_update(self, serializer):
-        if self.request.user != serializer.instance.author:
-            raise PermissionDenied('Нельзя изменить чужой комментарий!')
-        super(CommentViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, serializer):
-        if self.request.user != serializer.author:
-            raise PermissionDenied('Нельзя удалить чужой комментарий!')
-        super(CommentViewSet, self).perform_destroy(serializer)
 
 
 class ListCreateViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
